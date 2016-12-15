@@ -33,13 +33,15 @@ extension Resource {
 }
 
 enum NetworkError: Error {
+    /// Indicates no data was returned from the server
+    case networkFailure
     /// Indicates a failed transformation of JSON into a model
     case parseFailure
 }
 
 enum NetworkResponse<T> {
     /// Indicates a successful network response, containing the parsed data
-    case success(objects: T)
+    case success(models: T)
     /// Indicates an failed network response, containing the specific erro
     case error(type: NetworkError)
 }
@@ -50,14 +52,25 @@ final class Webservice {
     static private let apiKey = "e4f9e61f6ffd66639d33d3dde7e3159b"
     
     func load<T>(resource: Resource<T>, completion: @escaping (NetworkResponse<T>) -> Void) {
-        let urlRequest = createURLRequest(url: resource.url)
-        URLSession.shared.dataTask(with: urlRequest) { (data, response, error) in
-
+        let urlRequest = authenticatedURLRequest(url: resource.url)
+        URLSession.shared.dataTask(with: urlRequest) { (data, _, error) in
+            
+            guard let data = data else {
+                completion(.error(type: .networkFailure))
+                return
+            }
+            
+            guard let models = resource.parse(data) else {
+                completion(.error(type: .parseFailure))
+                return
+            }
+            
+            completion(.success(models: models))
+            
         }.resume()
-        
     }
     
-    private func createURLRequest(url: URL) -> URLRequest {
+    private func authenticatedURLRequest(url: URL) -> URLRequest {
         let apiKeyQueryItem = URLQueryItem(name: "api_key", value: Webservice.apiKey)
         
         var components = URLComponents(url: url, resolvingAgainstBaseURL: false)
