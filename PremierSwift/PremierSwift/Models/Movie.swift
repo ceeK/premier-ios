@@ -14,15 +14,15 @@ struct Movie {
     let posterPath: String
 }
 
-extension Movie {
+extension Movie: JSONRepresentable {
     
-    init(json: JSONDictionary) {
+    init?(json: JSONDictionary) {
         guard
-            let title = json["title"] as? String,
-            let synopsis = json["overview"] as? String,
-            let posterPath = json["poster_path"] as? String
+            let title: String = Movie.parse(json: json, key: "title"),
+            let synopsis: String = Movie.parse(json: json, key: "overview"),
+            let posterPath: String = Movie.parse(json: json, key: "poster_path")
         else {
-            fatalError()
+            return nil
         }
         
         self.title = title
