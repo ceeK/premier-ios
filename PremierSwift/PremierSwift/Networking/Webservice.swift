@@ -8,6 +8,8 @@
 
 import Foundation
 
+typealias JSONDictionary = [String: Any]
+
 struct Resource<A> {
     /// The URL where the resource exists
     let url: URL
@@ -42,7 +44,7 @@ enum NetworkError: Error {
 enum NetworkResponse<T> {
     /// Indicates a successful network response, containing the parsed data
     case success(models: T)
-    /// Indicates an failed network response, containing the specific erro
+    /// Indicates a failed network response, containing the specific erro
     case error(type: NetworkError)
 }
 
@@ -56,16 +58,22 @@ final class Webservice {
         URLSession.shared.dataTask(with: urlRequest) { (data, _, error) in
             
             guard let data = data else {
-                completion(.error(type: .networkFailure))
+                DispatchQueue.main.async {
+                    completion(.error(type: .networkFailure))
+                }
                 return
             }
             
             guard let models = resource.parse(data) else {
-                completion(.error(type: .parseFailure))
+                DispatchQueue.main.async {
+                    completion(.error(type: .parseFailure))
+                }
                 return
             }
             
-            completion(.success(models: models))
+            DispatchQueue.main.async {
+                completion(.success(models: models))
+            }
             
         }.resume()
     }
@@ -74,7 +82,7 @@ final class Webservice {
         let apiKeyQueryItem = URLQueryItem(name: "api_key", value: Webservice.apiKey)
         
         var components = URLComponents(url: url, resolvingAgainstBaseURL: false)
-        components?.queryItems?.append(apiKeyQueryItem)
+        components?.queryItems = [apiKeyQueryItem]
         
         guard let apiKeyURL = components?.url else {
             fatalError("Exception: Failed to add API key `\(Webservice.apiKey)` to resource URL `\(url)`")

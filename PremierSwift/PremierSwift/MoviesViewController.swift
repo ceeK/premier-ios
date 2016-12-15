@@ -1,21 +1,27 @@
 import UIKit
 
-class MoviesViewController: UITableViewController {
+final class MoviesViewController: UITableViewController {
     
-    private var movies: [[String: Any]] = []
+    private var movies: [Movie] = []
 
     override func viewDidLoad() {
         super.viewDidLoad()
         title = "Top Movies"
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "CellIdentifier")
-        let moviesURL = URL(string: "https://api.themoviedb.org/3/movie/top_rated?api_key=e4f9e61f6ffd66639d33d3dde7e3159b")
-        URLSession.shared.dataTask(with: moviesURL!) { (responseData, _, _) in
-            if let data = responseData {
-                let JSON = try! JSONSerialization.jsonObject(with: data, options: JSONSerialization.ReadingOptions(rawValue:0)) as! [String: Any]
-                self.movies = JSON["results"] as! [[String: Any]]
-                self.tableView.performSelector(onMainThread: #selector(UITableView.reloadData), with: nil, waitUntilDone: false)
+        
+        tableView.rowHeight = UITableViewAutomaticDimension
+        tableView.estimatedRowHeight = 100
+        tableView.register(MovieTableViewCell.self)
+        
+        // Load resource via operation...
+        let webservice = Webservice()
+        webservice.load(resource: Movie.topMovies) { response in
+            switch response {
+            case .success(let movies):
+                print(movies)
+            case .error(let error):
+                print(error)
             }
-        }.resume()
+        }
     }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -24,9 +30,11 @@ class MoviesViewController: UITableViewController {
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let movie = movies[indexPath.row]
-        let cell = tableView.dequeueReusableCell(withIdentifier: "CellIdentifier", for: indexPath)
-        cell.textLabel!.text = movie["title"] as? String
+        
+        let cell: MovieTableViewCell = tableView.dequeue(forIndexPath: indexPath)
+        cell.configure(title: movie.title, synopsis: movie.synopsis)
+    
         return cell
     }
+    
 }
-

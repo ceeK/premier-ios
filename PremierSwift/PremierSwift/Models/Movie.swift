@@ -11,5 +11,36 @@ import Foundation
 struct Movie {
     let title: String
     let synopsis: String
-    let imageURL: URL
+    let posterPath: String
+}
+
+extension Movie {
+    
+    init(json: JSONDictionary) {
+        guard
+            let title = json["title"] as? String,
+            let synopsis = json["overview"] as? String,
+            let posterPath = json["poster_path"] as? String
+        else {
+            fatalError()
+        }
+        
+        self.title = title
+        self.synopsis = synopsis
+        self.posterPath = posterPath
+    }
+    
+}
+
+extension Movie {
+
+    static let topMovies = Resource<[Movie]>(url: URL(string: "https://api.themoviedb.org/3/movie/top_rated")!, parseJSON: { json in
+        guard
+            let json = json as? JSONDictionary,
+            let results = json["results"] as? [JSONDictionary]
+        else { return nil }
+        
+        return results.flatMap(Movie.init(json:))
+    })
+
 }
