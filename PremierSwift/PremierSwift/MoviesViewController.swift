@@ -17,7 +17,8 @@ final class MoviesViewController: UITableViewController {
         webservice.load(resource: Movie.topMovies) { response in
             switch response {
             case .success(let movies):
-                print(movies)
+                self.movies = movies
+                self.tableView.reloadData()
             case .error(let error):
                 print(error)
             }
