@@ -44,3 +44,30 @@ enum NetworkResponse<T> {
     case error(type: NetworkError)
 }
 
+final class Webservice {
+
+    /// The API key for TheMovieDB
+    static private let apiKey = "e4f9e61f6ffd66639d33d3dde7e3159b"
+    
+    func load<T>(resource: Resource<T>, completion: @escaping (NetworkResponse<T>) -> Void) {
+        let urlRequest = createURLRequest(url: resource.url)
+        URLSession.shared.dataTask(with: urlRequest) { (data, response, error) in
+
+        }.resume()
+        
+    }
+    
+    private func createURLRequest(url: URL) -> URLRequest {
+        let apiKeyQueryItem = URLQueryItem(name: "api_key", value: Webservice.apiKey)
+        
+        var components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+        components?.queryItems?.append(apiKeyQueryItem)
+        
+        guard let apiKeyURL = components?.url else {
+            fatalError("Exception: Failed to add API key `\(Webservice.apiKey)` to resource URL `\(url)`")
+        }
+        
+        return URLRequest(url: apiKeyURL)
+    }
+    
+}
