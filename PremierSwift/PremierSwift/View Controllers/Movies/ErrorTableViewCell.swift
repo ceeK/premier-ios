@@ -8,7 +8,6 @@
 
 import UIKit
 
-
 final class ErrorTableViewCell: UITableViewCell {
     
     private let errorLabel = UILabel(frame: .zero)

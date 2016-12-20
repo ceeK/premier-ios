@@ -2,6 +2,12 @@ import UIKit
 
 final class MoviesViewController: UITableViewController {
     
+    private enum Row {
+        case loading
+        case error(String)
+        case movie(Movie)
+    }
+    
     private var rows: [Row] = [] {
         didSet {
             tableView.reloadData()
@@ -9,12 +15,6 @@ final class MoviesViewController: UITableViewController {
     }
     
     private let cellImageLoader = CellImageLoader()
-
-    private enum Row {
-        case loading
-        case error(String)
-        case movie(Movie)
-    }
     
     override func viewDidLoad() {
         super.viewDidLoad()

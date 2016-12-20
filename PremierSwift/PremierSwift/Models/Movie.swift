@@ -33,6 +33,16 @@ extension Movie: JSONRepresentable {
 }
 
 extension Movie {
+    
+    /// The full URL to fetch the movie poster
+    var posterURL: URL? {
+        let fullPosterPath = "https://image.tmdb.org/t/p/w92/\(posterPath)"
+        return URL(string: fullPosterPath)
+    }
+    
+}
+
+extension Movie {
 
     static let topMovies = Resource<[Movie]>(url: URL(string: "https://api.themoviedb.org/3/movie/top_rated")!, parseJSON: { json in
         guard
@@ -43,14 +53,4 @@ extension Movie {
         return results.flatMap(Movie.init(json:))
     })
 
-}
-
-extension Movie {
-    
-    /// The full URL to fetch the movie poster 
-    var posterURL: URL? {
-        let fullPosterPath = "https://image.tmdb.org/t/p/w92/\(posterPath)"
-        return URL(string: fullPosterPath)
-    }
-    
 }

@@ -9,6 +9,7 @@
 import Foundation
 import UIKit.UIImage
 
+/// Encapsulates the loading of an image.
 final class ImageFetchOperation: ResourceOperation<UIImage> {
     
     init(imageURL: URL, loader: ResourceLoader = Webservice(), completion: @escaping (NetworkResponse<UIImage>) -> Void) {

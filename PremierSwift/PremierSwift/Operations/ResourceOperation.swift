@@ -14,6 +14,7 @@ protocol ResourceLoader {
 
 extension Webservice: ResourceLoader {}
 
+/// Encapsulates the loading of a resource.
 class ResourceOperation<T>: Operation {
     
     private(set) var resource: Resource<T>
