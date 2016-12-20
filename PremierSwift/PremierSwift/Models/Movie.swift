@@ -44,3 +44,13 @@ extension Movie {
     })
 
 }
+
+extension Movie {
+    
+    /// The full URL to fetch the movie poster 
+    var posterURL: URL? {
+        let fullPosterPath = "https://image.tmdb.org/t/p/w92/\(posterPath)"
+        return URL(string: fullPosterPath)
+    }
+    
+}

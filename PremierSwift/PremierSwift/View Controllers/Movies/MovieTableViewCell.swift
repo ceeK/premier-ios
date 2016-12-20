@@ -10,6 +10,12 @@ import UIKit
 
 final class MovieTableViewCell: UITableViewCell {
     
+    var posterImage: UIImage? {
+        didSet {
+            posterImageView.image = posterImage
+        }
+    }
+    
     private let posterImageView = UIImageView(frame: .zero)
     private let titleLabel = UILabel(frame: .zero)
     private let synopsisLabel = UILabel(frame: .zero)
@@ -28,22 +34,35 @@ final class MovieTableViewCell: UITableViewCell {
         synopsisLabel.font = UIFont.preferredFont(forTextStyle: .body)
         
         posterImageView.contentMode = .scaleAspectFill
-        posterImageView.image = #imageLiteral(resourceName: "test_image")
         
         contentView.addSubview(posterImageView)
         contentView.addSubview(titleLabel)
         contentView.addSubview(synopsisLabel)
-        
+        setupLayout()
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        posterImageView.image = nil
+    }
+    
+    private func setupLayout() {
         posterImageView.translatesAutoresizingMaskIntoConstraints = false
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         synopsisLabel.translatesAutoresizingMaskIntoConstraints = false
         
         let margins = contentView.layoutMarginsGuide
+        let imageWidth: CGFloat = 92
         
         NSLayoutConstraint.activate([
             posterImageView.leadingAnchor.constraint(equalTo: margins.leadingAnchor),
             posterImageView.topAnchor.constraint(equalTo: margins.topAnchor),
             posterImageView.heightAnchor.constraint(equalTo: posterImageView.widthAnchor, multiplier: 1.5),
+            posterImageView.widthAnchor.constraint(equalToConstant: imageWidth),
             
             titleLabel.topAnchor.constraint(equalTo: posterImageView.topAnchor, constant: 8),
             titleLabel.leadingAnchor.constraint(equalTo: posterImageView.trailingAnchor, constant: 16),
@@ -55,10 +74,6 @@ final class MovieTableViewCell: UITableViewCell {
             synopsisLabel.bottomAnchor.constraint(equalTo: margins.bottomAnchor),
             synopsisLabel.trailingAnchor.constraint(equalTo: margins.trailingAnchor)
         ])
-    }
-    
-    required init?(coder aDecoder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
     }
     
     func configure(title: String?, synopsis: String?) {

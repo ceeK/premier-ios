@@ -7,31 +7,10 @@
 //
 
 import Foundation
+import UIKit.UIApplication
 
-typealias JSONDictionary = [String: Any]
-
-struct Resource<A> {
-    /// The URL where the resource exists
-    let url: URL
-    /// A function that transforms raw data into `A`
-    let parse: (Data) -> A?
-}
-
-extension Resource {
-
-    /// A Resource initialiser that specifically handles JSON parsing.
-    ///
-    /// - Parameters:
-    ///   - url: The URL where the resource exists.
-    ///   - parseJSON: The parsing function that takes JSON object.
-    init(url: URL, parseJSON: @escaping (AnyObject) -> A?) {
-        self.url = url
-        self.parse = { data in
-            guard let json = try? JSONSerialization.jsonObject(with: data, options: []) as AnyObject else { return nil }
-            return parseJSON(json)
-        }
-    }
-    
+private struct WebserviceConstants {
+    static let apiKey = "e4f9e61f6ffd66639d33d3dde7e3159b"
 }
 
 enum NetworkError: Error {
@@ -45,28 +24,64 @@ enum NetworkResponse<T> {
     /// Indicates a successful network response, containing the parsed data
     case success(models: T)
     /// Indicates a failed network response, containing the specific erro
-    case error(type: NetworkError)
+    case failure(error: NetworkError)
 }
 
+protocol NetworkDataTask {
+    func resume()
+}
+
+extension URLSessionDataTask: NetworkDataTask {}
+
+protocol NetworkAccessing {
+    func dataTask(with request: URLRequest, completionHandler: @escaping (Data?, URLResponse?, Error?) -> Swift.Void) -> NetworkDataTask
+}
+
+extension URLSession: NetworkAccessing {
+    func dataTask(with request: URLRequest, completionHandler: @escaping (Data?, URLResponse?, Error?) -> Void) -> NetworkDataTask {
+        return dataTask(with: request, completionHandler: completionHandler) as URLSessionDataTask
+    }
+}
+
+/// Controls the loading of arbitrary resources from the network
 final class Webservice {
 
     /// The API key for TheMovieDB
-    static private let apiKey = "e4f9e61f6ffd66639d33d3dde7e3159b"
+    private let apiKey: String
+
+    /// A client used to access the network
+    let networkClient: NetworkAccessing
     
+    init(networkClient: NetworkAccessing = URLSession.shared, apiKey: String = WebserviceConstants.apiKey) {
+        self.networkClient = networkClient
+        self.apiKey = apiKey
+    }
+
+    /// Loads a resource from the network and callsback with a response.
+    ///
+    /// - Parameters:
+    ///   - resource: The resource to load.
+    ///   - completion: A `NetworkResponse` of either success or failure
     func load<T>(resource: Resource<T>, completion: @escaping (NetworkResponse<T>) -> Void) {
-        let urlRequest = authenticatedURLRequest(url: resource.url)
-        URLSession.shared.dataTask(with: urlRequest) { (data, _, error) in
+        
+        var urlRequest = authenticatedURLRequest(url: resource.url)
+        urlRequest.timeoutInterval = 10
+        
+        NetworkActivityIndicatorManager.shared.requestVisibility()
+        networkClient.dataTask(with: urlRequest) { (data, _, error) in
+            
+            NetworkActivityIndicatorManager.shared.releaseVisibility()
             
             guard let data = data else {
                 DispatchQueue.main.async {
-                    completion(.error(type: .networkFailure))
+                    completion(.failure(error: .networkFailure))
                 }
                 return
             }
             
             guard let models = resource.parse(data) else {
                 DispatchQueue.main.async {
-                    completion(.error(type: .parseFailure))
+                    completion(.failure(error: .parseFailure))
                 }
                 return
             }
@@ -79,13 +94,13 @@ final class Webservice {
     }
     
     private func authenticatedURLRequest(url: URL) -> URLRequest {
-        let apiKeyQueryItem = URLQueryItem(name: "api_key", value: Webservice.apiKey)
+        let apiKeyQueryItem = URLQueryItem(name: "api_key", value: apiKey)
         
         var components = URLComponents(url: url, resolvingAgainstBaseURL: false)
         components?.queryItems = [apiKeyQueryItem]
         
         guard let apiKeyURL = components?.url else {
-            fatalError("Exception: Failed to add API key `\(Webservice.apiKey)` to resource URL `\(url)`")
+            fatalError("Exception: Failed to add API key `\(apiKey)` to resource URL `\(url)`")
         }
         
         return URLRequest(url: apiKeyURL)
