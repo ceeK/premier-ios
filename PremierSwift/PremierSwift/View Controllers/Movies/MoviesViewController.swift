@@ -71,7 +71,9 @@ final class MoviesViewController: UITableViewController {
             
             guard let posterURL = movie.posterURL else { return cell }
             
+            cell.tag = indexPath.row
             cellImageLoader.loadImage(imageURL: posterURL, cell: cell) { image in
+                guard cell.tag == indexPath.row else { return }
                 cell.posterImage = image
             }
             
